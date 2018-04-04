@@ -1,30 +1,38 @@
+#pragma once
+
 #include "FBullCowGame.h"
+#include <map>
+
+// to make syntax Unreal friendly
+#define TMap std::map
 
 FBullCowGame::FBullCowGame() { 
 	Reset();
 }
 
-int32 FBullCowGame::GetMaxTries() const { return MyMaxTries; }
 int32 FBullCowGame::GetCurrentTry() const { return MyCurrentTry; }
 int32 FBullCowGame::GetHiddenWordLength() const { return MyHiddenWord.length(); }
 bool FBullCowGame::IsGameWon() const { return bGameIsWon; }
 
+int32 FBullCowGame::GetMaxTries() const {
+	TMap<int32, int32> WordLengthToMaxTries{ {3,4}, {4,7}, {5,10}, {6,15}, {7,20} };
+	return WordLengthToMaxTries[MyHiddenWord.length()];
+}
+
 void FBullCowGame::Reset() {
-	constexpr int32 MAX_TRIES = 8;
-	const FString HIDDEN_WORD = "planet";
+	const FString HIDDEN_WORD = "plane"; // this MUST be an isogram
 
 	MyCurrentTry = 1;
-	MyMaxTries = MAX_TRIES;
 	MyHiddenWord = HIDDEN_WORD;
 	bGameIsWon = false;
 }
 
 EWordStatus FBullCowGame::CheckGuessValidity(FString Guess) const {
-	if (false) { // if Guess is not an isogram
-		return EWordStatus::Not_Isogram;
+	if (!IsIsogram(Guess)) { // if Guess is not an isogram
+		return EWordStatus::Not_Isogram; 
 	}
-	else if (false) { // if Guess is not lowercase
-		return EWordStatus::Not_Lowercase;
+	else if (!IsLowerCase(Guess)) { // if Guess is not lowercase 
+		return EWordStatus::Not_Lowercase; 
 	}
 	else if (Guess.length() != GetHiddenWordLength()) { // if Guess is the wrong length
 		return EWordStatus::Wrong_Length;
@@ -60,4 +68,29 @@ FBullCowCount FBullCowGame::SubmitValidGuess(FString Guess) {
 	bGameIsWon = BullCowCount.Bulls == WordLength ? true : false;
 	// compare letters against the hidden word
 	return BullCowCount;
+}
+
+bool FBullCowGame::IsIsogram(FString Word) const {
+	// treat 0 or 1 letter words as isograms
+	if (Word.length() <= 1) return true;
+	// can use unordered set or TSet (Unreal); using map for practice
+	TMap<char, bool> LetterSeen;
+	for (auto Letter : Word) {
+		Letter = tolower(Letter);
+		if (LetterSeen[Letter]) {
+			return false;
+		}
+		else {
+			LetterSeen[Letter] = true;
+		}
+	}
+	
+	return true;
+}
+
+bool FBullCowGame::IsLowerCase(FString Word) const {
+	for (auto Letter : Word) {
+		if (!islower(Letter)) return false;
+	}
+	return true;
 }
